@@ -1,0 +1,39 @@
+name:  Express CI/CD
+on:
+  push:
+    branches: [master]
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: List files and check permissions
+        run: |
+          ls -l
+
+      - name: Build with Maven
+        run: |
+          chmod +x ./mvnw
+          ./mvnw clean package
+
+      - name: Login to Aliyun ACR
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.ACR_REGISTORY }}  # Ensure the spelling is correct
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.ACR_REGISTORY }}:latest
